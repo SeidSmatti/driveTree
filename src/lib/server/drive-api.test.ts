@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { listDriveFolder, getDriveFileContent, DriveApiError } from './drive-api';
 
-// Mock the env module before importing the module under test
-vi.mock('$env/static/private', () => ({
-	GOOGLE_DRIVE_API_KEY: 'test-api-key-123'
-}));
-
-// Import after mock is set up
-const { listDriveFolder, getDriveFileContent, DriveApiError } = await import('./drive-api');
+const TEST_KEY = 'test-api-key-123';
 
 function mockJsonResponse(body: object, status = 200) {
 	return new Response(JSON.stringify(body), {
@@ -22,9 +17,7 @@ beforeEach(() => {
 describe('listDriveFolder', () => {
 	it('fetches folder name and file listing', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch')
-			// First call: folder metadata (name)
 			.mockResolvedValueOnce(mockJsonResponse({ name: 'my-project' }))
-			// Second call: file listing
 			.mockResolvedValueOnce(mockJsonResponse({
 				files: [
 					{ id: 'f1', name: 'src', mimeType: 'application/vnd.google-apps.folder' },
@@ -32,7 +25,7 @@ describe('listDriveFolder', () => {
 				]
 			}));
 
-		const result = await listDriveFolder('folder123');
+		const result = await listDriveFolder('folder123', TEST_KEY);
 
 		expect(result.folderName).toBe('my-project');
 		expect(result.files).toHaveLength(2);
@@ -41,7 +34,6 @@ describe('listDriveFolder', () => {
 		expect(result.files[1].name).toBe('README.md');
 		expect(result.files[1].size).toBe(1024);
 
-		// Verify API key is included in requests
 		const urls = fetchSpy.mock.calls.map(c => String(c[0]));
 		expect(urls.every(u => u.includes('key=test-api-key-123'))).toBe(true);
 	});
@@ -57,7 +49,7 @@ describe('listDriveFolder', () => {
 				files: [{ id: 'f2', name: 'b.txt', mimeType: 'text/plain' }]
 			}));
 
-		const result = await listDriveFolder('folder123');
+		const result = await listDriveFolder('folder123', TEST_KEY);
 		expect(result.files).toHaveLength(2);
 	});
 
@@ -72,7 +64,7 @@ describe('listDriveFolder', () => {
 				]
 			}));
 
-		const result = await listDriveFolder('folder123');
+		const result = await listDriveFolder('folder123', TEST_KEY);
 		expect(result.files.map(f => f.name)).toEqual(['docs', 'alpha.txt', 'zebra.txt']);
 	});
 
@@ -81,7 +73,7 @@ describe('listDriveFolder', () => {
 			.mockResolvedValueOnce(mockJsonResponse({ name: '' }))
 			.mockResolvedValueOnce(mockJsonResponse({ error: { message: 'Not found' } }, 404));
 
-		await expect(listDriveFolder('bad-id')).rejects.toThrow('Folder not found');
+		await expect(listDriveFolder('bad-id', TEST_KEY)).rejects.toThrow('Folder not found');
 	});
 
 	it('throws DriveApiError on 403', async () => {
@@ -89,7 +81,11 @@ describe('listDriveFolder', () => {
 			.mockResolvedValueOnce(mockJsonResponse({ name: '' }))
 			.mockResolvedValueOnce(mockJsonResponse({ error: { message: 'Forbidden' } }, 403));
 
-		await expect(listDriveFolder('private-folder')).rejects.toThrow('not public');
+		await expect(listDriveFolder('private-folder', TEST_KEY)).rejects.toThrow('not public');
+	});
+
+	it('throws when API key is empty', async () => {
+		await expect(listDriveFolder('folder123', '')).rejects.toThrow('API key not configured');
 	});
 });
 
@@ -102,7 +98,7 @@ describe('getDriveFileContent', () => {
 			})
 		);
 
-		const res = await getDriveFileContent('file123');
+		const res = await getDriveFileContent('file123', TEST_KEY);
 		expect(res.status).toBe(200);
 		const text = await res.text();
 		expect(text).toBe('file content here');
@@ -113,6 +109,6 @@ describe('getDriveFileContent', () => {
 			mockJsonResponse({ error: { message: 'Not found' } }, 404)
 		);
 
-		await expect(getDriveFileContent('bad-id')).rejects.toThrow(DriveApiError);
+		await expect(getDriveFileContent('bad-id', TEST_KEY)).rejects.toThrow(DriveApiError);
 	});
 });

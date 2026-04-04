@@ -1,5 +1,4 @@
 import type { FileNode } from '$lib/drive/types';
-import { GOOGLE_DRIVE_API_KEY } from '$env/static/private';
 
 const API_BASE = 'https://www.googleapis.com/drive/v3/files';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
@@ -18,8 +17,7 @@ export class DriveApiError extends Error {
  * List all children of a public Google Drive folder using the Drive API v3.
  * Handles pagination automatically.
  */
-export async function listDriveFolder(folderId: string): Promise<{ files: FileNode[]; folderName: string }> {
-	const apiKey = GOOGLE_DRIVE_API_KEY;
+export async function listDriveFolder(folderId: string, apiKey: string): Promise<{ files: FileNode[]; folderName: string }> {
 	if (!apiKey) {
 		throw new DriveApiError(500, 'Google Drive API key not configured');
 	}
@@ -77,8 +75,7 @@ export async function listDriveFolder(folderId: string): Promise<{ files: FileNo
  * Get the content of a public file from Google Drive.
  * Returns a Response with the file body streamed.
  */
-export async function getDriveFileContent(fileId: string): Promise<Response> {
-	const apiKey = GOOGLE_DRIVE_API_KEY;
+export async function getDriveFileContent(fileId: string, apiKey: string): Promise<Response> {
 	if (!apiKey) {
 		throw new DriveApiError(500, 'Google Drive API key not configured');
 	}

@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 import { getKV } from '$lib/server/kv';
 import { listDriveFolder, DriveApiError } from '$lib/server/drive-api';
@@ -7,6 +8,7 @@ const CACHE_TTL = 3600; // 1 hour
 const STALE_CACHE_TTL = 86400; // 24 hours fallback
 
 export const GET: RequestHandler = async ({ params, platform }) => {
+	const apiKey = env.GOOGLE_DRIVE_API_KEY ?? '';
 	const { folderId } = params;
 
 	if (!/^[a-zA-Z0-9_-]+$/.test(folderId)) {
@@ -28,7 +30,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 
 	// Fetch from Drive API
 	try {
-		const { files, folderName } = await listDriveFolder(folderId);
+		const { files, folderName } = await listDriveFolder(folderId, apiKey);
 		const cachedAt = new Date().toISOString();
 		const payload = JSON.stringify({ files, folderName, cachedAt });
 

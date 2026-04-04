@@ -1,9 +1,11 @@
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 import { getDriveFileContent, DriveApiError } from '$lib/server/drive-api';
 
 const MAX_PROXY_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export const GET: RequestHandler = async ({ params }) => {
+	const apiKey = env.GOOGLE_DRIVE_API_KEY ?? '';
 	const { fileId } = params;
 
 	if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) {
@@ -11,7 +13,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	try {
-		const res = await getDriveFileContent(fileId);
+		const res = await getDriveFileContent(fileId, apiKey);
 
 		const contentLength = res.headers.get('content-length');
 		if (contentLength && parseInt(contentLength) > MAX_PROXY_SIZE) {
