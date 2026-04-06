@@ -188,14 +188,7 @@ For local development, the app uses an in-memory KV mock — no Cloudflare accou
 
 ## Deployment
 
-driveTree deploys to Cloudflare Pages (free tier). See [DEPLOY.md](../DEPLOY.md) for the full step-by-step guide covering:
-
-- Google Drive API key setup
-- Cloudflare Pages project creation
-- KV namespace creation and binding
-- GitHub Actions CI/CD (automatic deploy on push)
-- Custom domain + free SSL
-- Security and cost breakdown
+driveTree deploys to Cloudflare Pages (free tier).
 
 ### Quick deploy
 
